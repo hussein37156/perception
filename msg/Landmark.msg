@@ -1,0 +1,8 @@
+string ID #Landmark name
+
+
+# Real world coordinates
+float32 x 
+float32 y
+float32 z
+
