@@ -129,13 +129,13 @@ def location(points_3D, u, v, region_size=50):
 
 def main_function():
 
-    left_image_corrected = correct_underwater_image(left_image, K1,1,1.333)
-    right_image_corrected = correct_underwater_image(right_image, K2,1,1.333)
+    #left_image_corrected = correct_underwater_image(left_image, K1,1,1.333)
+    #right_image_corrected = correct_underwater_image(right_image, K2,1,1.333)
     clahe = cv.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-    left_image_corrected = clahe.apply(cv.cvtColor(left_image_corrected, cv.COLOR_BGR2GRAY))
-    right_image_corrected = clahe.apply(cv.cvtColor(right_image_corrected, cv.COLOR_BGR2GRAY))
+    left_image_corrected = clahe.apply(cv.cvtColor(left_image, cv.COLOR_BGR2GRAY))
+    right_image_corrected = clahe.apply(cv.cvtColor(right_image, cv.COLOR_BGR2GRAY))
     # Compute disparity map (ensure correct data type)
-    disparity_map = stereo.compute(left_image_corrected,right_image_corrected).astype(np.float32) / 16.0
+    disparity_map = stereo.compute(left_image,right_image).astype(np.float32) / 16.0
     # Mask invalid disparity values
     mask = disparity_map > 0  # Valid disparities only
 

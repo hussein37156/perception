@@ -64,5 +64,7 @@ while not rospy.is_shutdown():
         right_image_pub.publish(right_image_msg)
         depth_map_pub.publish(depth_map_msg)
         depth_pub.publish(depth_msg)
+        
+        
     
     rospy.sleep(0.05)
