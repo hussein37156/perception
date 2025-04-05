@@ -18,7 +18,7 @@ h, w = 720, 1280
 
 # Depth range limits (in meters)
 MIN_DEPTH = 0.3  # 30cm
-MAX_DEPTH = 20.0  # 20m
+MAX_DEPTH = 10.0  # 10m
 
 # Intrinsic matrix
 K = np.array([[fx, 0, cx],
@@ -26,9 +26,9 @@ K = np.array([[fx, 0, cx],
               [0, 0, 1]])
 
 # Stereo matcher configuration
-window_size = 5
+window_size = 1
 min_disp = 0
-num_disp = 16*6  # Increased number of disparities
+num_disp = 16*20  # Increased number of disparities
 
 # Create stereo matcher
 stereo = cv.StereoSGBM_create(
