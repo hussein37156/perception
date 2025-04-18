@@ -8,9 +8,9 @@ from cv_bridge import CvBridge
 
 rospy.init_node('camera_node')
 
-left_image_pub = rospy.Publisher('/left_image', Image, queue_size=10)
-right_image_pub = rospy.Publisher('/right_image', Image, queue_size=10)
-depth_map_pub = rospy.Publisher('/depth_map', Image, queue_size=10)
+left_image_pub = rospy.Publisher('//zed/zed_node/left/image_rect_color', Image, queue_size=10)
+right_image_pub = rospy.Publisher('//zed/zed_node/right/image_rect_color', Image, queue_size=10)
+depth_map_pub = rospy.Publisher('//zed/zed_node/depth/depth_registered', Image, queue_size=10)
 depth_pub = rospy.Publisher('/depth', std_msgs.msg.Float32, queue_size=10)
 
 zed = sl.Camera()

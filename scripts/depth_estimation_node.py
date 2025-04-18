@@ -28,7 +28,7 @@ K = np.array([[fx, 0, cx],
 # Stereo matcher configuration
 window_size = 1
 min_disp = 0
-num_disp = 16*20  # Increased number of disparities
+num_disp = 16*25  # Increased number of disparities
 
 # Create stereo matcher
 stereo = cv.StereoSGBM_create(
@@ -70,7 +70,7 @@ def right_image_call_back(data):
         right_image = cv_image.copy()
 
 
-def calculate_depth(disparity_map, u, v, window_size=25):
+def calculate_depth(disparity_map, u, v, window_size=50):
     """Calculate robust depth at (u,v) with validity checks"""
     half = window_size // 2
     u, v = int(u), int(v)
@@ -197,11 +197,11 @@ def main_function():
     rospy.loginfo(f"Depth: {final_depth:.2f}m")
     
 if __name__ == "__main__":
-    rospy.init_node("robust_depth_estimation")
+    rospy.init_node("depth_estimation_node")
     
     # Publishers and subscribers
-    rospy.Subscriber("/left_image", Image, left_image_call_back)
-    rospy.Subscriber("/right_image", Image, right_image_call_back)
+    rospy.Subscriber("/zed/zed_node/left/image_rect_color", Image, left_image_call_back)
+    rospy.Subscriber("/zed/zed_node/right/image_rect_color", Image, right_image_call_back)
     depth_pub = rospy.Publisher('/depth_estimated', std_msgs.msg.Float32, queue_size=10)
     
     rate = rospy.Rate(20)
