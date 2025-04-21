@@ -7,14 +7,14 @@ import cv2 as cv
 import numpy as np
 
 # Camera parameters (verified)
-fx = 700.515  # Focal length in pixels
-fy = 700.515
-cx = 662.935  # Principal point
-cy = 353.9215
+fx=350.2575
+fy=350.2575
+cx=346.9675
+cy=184.46075
 baseline = 0.12  # 12cm baseline
 
 # Image dimensions
-h, w = 720, 1280
+h, w = 360, 640
 
 # Depth range limits (in meters)
 MIN_DEPTH = 0.3  # 30cm
@@ -28,7 +28,7 @@ K = np.array([[fx, 0, cx],
 # Stereo matcher configuration
 window_size = 1
 min_disp = 0
-num_disp = 16*25  # Increased number of disparities
+num_disp = 16*10  # Increased number of disparities
 
 # Create stereo matcher
 stereo = cv.StereoSGBM_create(
@@ -139,8 +139,8 @@ def main_function():
         return
     
     # Resize and preprocess
-    left_img = cv.resize(left_image, (w, h))
-    right_img = cv.resize(right_image, (w, h))
+    left_img =left_image #cv.resize(left_image, (w, h))
+    right_img =right_image #cv.resize(right_image, (w, h))
     
     gray_left = preprocess_image(left_img)
     gray_right = preprocess_image(right_img)
@@ -150,8 +150,8 @@ def main_function():
     disparity = postprocess_disparity(raw_disp)
     
     # Calculate depth at multiple points for robustness
-    center_u = w // 2
-    center_v = h // 2
+    center_u = int(w //2)
+    center_v = int(h*0.7)
     
     # Sample multiple points around center
     points = [
@@ -200,8 +200,8 @@ if __name__ == "__main__":
     rospy.init_node("depth_estimation_node")
     
     # Publishers and subscribers
-    rospy.Subscriber("/zed/zed_node/left/image_rect_color", Image, left_image_call_back)
-    rospy.Subscriber("/zed/zed_node/right/image_rect_color", Image, right_image_call_back)
+    rospy.Subscriber("/left_rect_image", Image, left_image_call_back)
+    rospy.Subscriber("/right_rect_image", Image, right_image_call_back)
     depth_pub = rospy.Publisher('/depth_estimated', std_msgs.msg.Float32, queue_size=10)
     
     rate = rospy.Rate(20)
