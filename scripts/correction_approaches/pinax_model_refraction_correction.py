@@ -19,7 +19,7 @@ clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 
 def init():
     mapPath = "/home/hussein/AUV_ws/src/auv_perception/scripts"
-    global mapx_left, mapy_left
+    global mapx_left, mapy_left , mapx_right, mapy_right
     mapx_left = np.loadtxt(f"{mapPath}/MapX_left.txt", dtype=np.float32, delimiter=",")
     mapy_left = np.loadtxt(f"{mapPath}/MapY_left.txt", dtype=np.float32, delimiter=",")
     mapx_right = np.loadtxt(f"{mapPath}/MapX_right.txt", dtype=np.float32, delimiter=",")
@@ -65,7 +65,7 @@ def left_image_call_back(data):
     left_image_pub.publish(msg)
 
 def right_image_call_back(data):
-    global mapx_left, mapy_left, bridge
+    global mapx_right, mapy_right, bridge
     cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
     if len(cv_image.shape) == 3 and cv_image.shape[2] == 4:
         right_image = cv.cvtColor(cv_image, cv.COLOR_RGBA2BGR)

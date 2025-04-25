@@ -7,10 +7,16 @@ import cv2 as cv
 import numpy as np
 
 # Camera parameters (verified)
-fx = 473.847
-fy = 456.285
-cx = 368.059
-cy = 177.863
+fx_left = 473.847
+fy_left = 456.285
+cx_left = 368.059
+cy_left = 177.863
+
+fx_right = 479.941
+fy_right = 463.461
+cx_right = 361.966
+cy_right = 168.336
+
 baseline = 0.12  # 12cm baseline
 
 # Image dimensions
@@ -21,9 +27,28 @@ MIN_DEPTH = 0.3  # 30cm
 MAX_DEPTH = 10.0  # 10m
 
 # Intrinsic matrix
-K = np.array([[fx, 0, cx],
-              [0, fy, cy],
+K_left = np.array([[fx_left, 0, cx_left],
+              [0, fy_left, cy_left],
               [0, 0, 1]])
+
+
+
+K_right = np.array([[fx_right, 0, cx_right],
+              [0, fy_right, cy_right],
+              [0, 0, 1]])
+
+
+D_left = np.zeros(5)  # Replace with real distortion if available
+D_right = np.zeros(5)
+
+
+R = np.eye(3)      # Replace with real rotation matrix
+T = np.array([[baseline], [0], [0]])  # Translation along x-axis
+
+R1, R2, P1, P2, Q, _, _ = cv.stereoRectify(K_left, D_left, K_right, D_right, (w, h), R, T, alpha=0)
+
+left_map1, left_map2 = cv.initUndistortRectifyMap(K_left, D_left, R1, P1, (w, h), cv.CV_16SC2)
+right_map1, right_map2 = cv.initUndistortRectifyMap(K_right, D_right, R2, P2, (w, h), cv.CV_16SC2)
 
 # Stereo matcher configuration
 window_size = 1
@@ -94,7 +119,7 @@ def calculate_depth(disparity_map, u, v, window_size=50):
     median_disp = np.median(valid_disp)
     
     # Calculate depth with physical limits
-    depth = (fx * baseline) / median_disp if median_disp > 0 else 0.0
+    depth = (fx_left * baseline) / median_disp if median_disp > 0 else 0.0
     
     # Apply depth range limits
     depth = np.clip(depth, MIN_DEPTH, MAX_DEPTH)
@@ -141,6 +166,10 @@ def main_function():
     # Resize and preprocess
     left_img =left_image #cv.resize(left_image, (w, h))
     right_img =right_image #cv.resize(right_image, (w, h))
+    
+    
+    #left_img = cv.remap(left_image, left_map1, left_map2, cv.INTER_LINEAR)
+    #right_img = cv.remap(right_image, right_map1, right_map2, cv.INTER_LINEAR)
     
     gray_left = preprocess_image(left_img)
     gray_right = preprocess_image(right_img)
