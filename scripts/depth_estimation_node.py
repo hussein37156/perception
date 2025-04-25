@@ -7,10 +7,10 @@ import cv2 as cv
 import numpy as np
 
 # Camera parameters (verified)
-fx=350.2575
-fy=350.2575
-cx=346.9675
-cy=184.46075
+fx = 473.847
+fy = 456.285
+cx = 368.059
+cy = 177.863
 baseline = 0.12  # 12cm baseline
 
 # Image dimensions
@@ -150,8 +150,8 @@ def main_function():
     disparity = postprocess_disparity(raw_disp)
     
     # Calculate depth at multiple points for robustness
-    center_u = int(w //2)
-    center_v = int(h*0.7)
+    center_u = int(w *0.5)
+    center_v = int(h*0.65)
     
     # Sample multiple points around center
     points = [
