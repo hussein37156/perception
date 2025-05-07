@@ -207,7 +207,7 @@ if __name__ == "__main__":
     rospy.Subscriber("/right_rect_image", Image, right_image_call_back)
     depth_pub = rospy.Publisher('/depth_estimated', std_msgs.msg.Float32, queue_size=10)
     
-    rate = rospy.Rate(20)
+    rate = rospy.Rate(10)
     
     while not rospy.is_shutdown():
         try:
