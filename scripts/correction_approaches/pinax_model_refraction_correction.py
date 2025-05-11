@@ -27,8 +27,8 @@ def init():
     
     
     rospy.init_node('pinax_correction_node', anonymous=False)
-    rospy.Subscriber("/left_image_converted", Image, left_image_call_back)
-    rospy.Subscriber("/right_image_converted", Image, right_image_call_back)
+    rospy.Subscriber("/zed/zed_node/left/image_rect_color", Image, left_image_call_back)
+    rospy.Subscriber("/zed/zed_node/right/image_rect_color", Image, right_image_call_back)
 
 def enhance_contrast(image_bgr):
     # Convert to LAB color space
