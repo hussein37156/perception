@@ -3,7 +3,7 @@ import rospy
 import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from auv_perception.msg import Multi_instance, Landmark
+from perception.msg import Multi_instance, Landmark
 import torch
 from ultralytics import YOLO
 

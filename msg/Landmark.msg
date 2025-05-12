@@ -2,7 +2,7 @@ string ID #Landmark name
 
 
 # Real world coordinates
-float32 x 
-float32 y
-float32 z
-
+float64 x 
+float64 y
+float64 z
+float64 variance

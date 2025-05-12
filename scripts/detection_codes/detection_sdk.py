@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rospy
 from sensor_msgs.msg import Image
-from auv_perception.msg import Multi_instance, Landmark
+from perception.msg import Multi_instance, Landmark
 from cv_bridge import CvBridge
 import pyzed.sl as sl
 import numpy as np

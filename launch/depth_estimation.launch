@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-	<node name="image_correction" type="pinax_model_refraction_correction.py" pkg="auv_perception" output="screen" respawn="true"></node>
-	<node name="depth_estimation" type="depth_estimation_node.py" pkg="auv_perception" output="screen" respawn="true"></node>
-	<node name="depth_wrapper" type="depth_wrapper.py" pkg="auv_perception" output="screen" respawn="true"></node>
+	<node name="image_correction" type="pinax_model_refraction_correction.py" pkg="perception" output="screen" respawn="true"></node>
+	<node name="depth_estimation" type="depth_estimation_node.py" pkg="perception" output="screen" respawn="true"></node>
+	<node name="depth_wrapper" type="depth_wrapper.py" pkg="perception" output="screen" respawn="true"></node>
 </launch>
