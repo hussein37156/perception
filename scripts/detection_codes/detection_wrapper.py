@@ -31,7 +31,7 @@ class ObjectDetector:
         # Initialize the YOLO model
         #torch.cuda.set_device(0)
         self.device = torch.device('cpu')
-        model_weights_path = "/home/hussein/AUV_ws/src/auv_perception/best.pt"
+        model_weights_path = "/home/hussein/AUV_ws/src/best.pt"
         self.model = YOLO(model_weights_path)
         self.model.to(device=self.device)
     
