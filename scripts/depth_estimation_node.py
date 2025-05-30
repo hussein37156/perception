@@ -151,7 +151,7 @@ def main_function():
     disparity = postprocess_disparity(raw_disp)
     
     # Calculate depth at multiple points for robustness
-    center_u = int(w *0.35)
+    center_u = int(w *0.5)
     center_v = int(h*0.5)
     
     # Sample multiple points around center
@@ -182,8 +182,8 @@ def main_function():
     #vis_disp = cv.applyColorMap(vis_disp, cv.COLORMAP_JET)
     
     # Mark center point
-    cv.circle(left_img, (center_u, center_v), 5, (0, 255, 0), 2)
-    cv.putText(left_img, f"Depth: {final_depth:.2f}m", (10, 30), 
+    cv.circle(vis_disp, (center_u, center_v), 5, (0, 255, 0), 2)
+    cv.putText(vis_disp, f"Depth: {final_depth:.2f}m", (10, 30), 
                cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
     
     # Show images

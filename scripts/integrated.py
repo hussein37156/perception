@@ -166,7 +166,7 @@ class StereoDepthNode:
                 return
 
             # Calculate depth at center and surrounding points
-            cu, cv_center = int(self.w * 0.35), int(self.h * 0.5)
+            cu, cv_center = int(self.w * 0.5), int(self.h * 0.5)
             points = [(cu, cv_center)]  # Just center point for simplicity
             
             depths = []
