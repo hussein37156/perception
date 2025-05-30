@@ -25,9 +25,9 @@ MAX_DEPTH = 10.0  # 10m
 
 
 # Stereo matcher configuration
-window_size = 4
+window_size = 7
 min_disp = 0
-num_disp = 16*10  # Increased number of disparities
+num_disp = 18*10  # Increased number of disparities
 
 # Create stereo matcher
 stereo = cv.StereoSGBM_create(
@@ -56,8 +56,7 @@ def left_image_call_back(data):
     if len(cv_image.shape) == 3 and cv_image.shape[2] == 4:  # RGBA (8UC4) detected
         left_image = cv.cvtColor(cv_image, cv.COLOR_RGBA2BGR)  # Convert to BGR
     else:
-        left_image = cv_image.copy()  # Already in compatible format
-        
+        left_image = cv_image.copy()  # Already in compatible format   
 
 def right_image_call_back(data):
     global right_image
@@ -67,7 +66,6 @@ def right_image_call_back(data):
         right_image = cv.cvtColor(cv_image, cv.COLOR_RGBA2BGR)  # Convert to BGR
     else:
         right_image = cv_image.copy()
-
 
 def calculate_depth(disparity_map, u, v, window_size=50):
     """Calculate robust depth at (u,v) with validity checks"""
@@ -153,7 +151,7 @@ def main_function():
     disparity = postprocess_disparity(raw_disp)
     
     # Calculate depth at multiple points for robustness
-    center_u = int(w *0.5)
+    center_u = int(w *0.35)
     center_v = int(h*0.5)
     
     # Sample multiple points around center
@@ -173,7 +171,7 @@ def main_function():
     
     # Use median of valid depth measurements
     final_depth = np.median(depths) if len(depths) > 0 else 0.0
-    
+    final_depth = (final_depth*1000)
     # Publish depth
     depth_msg = std_msgs.msg.Float32()
     depth_msg.data = final_depth
@@ -190,6 +188,7 @@ def main_function():
     
     # Show images
     cv.imshow("Left", left_img)
+    cv.imshow("Right", right_img)
     cv.imshow("Disparity", vis_disp)
     cv.waitKey(1)
     

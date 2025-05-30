@@ -13,7 +13,7 @@ class StereoDepthNode:
         rospy.init_node('stereo_depth_node', anonymous=True)
         
         # Paths - make sure these are correct
-        mapPath = rospy.get_param("~map_path", "/home/hussein/AUV_ws/src/auv_perception/scripts")
+        mapPath = rospy.get_param("~map_path", "/home/hussein/AUV_ws/src/perception/scripts")
         
         try:
             # Load calibration maps with error handling
@@ -166,7 +166,7 @@ class StereoDepthNode:
                 return
 
             # Calculate depth at center and surrounding points
-            cu, cv_center = int(self.w / 2), int(self.h / 2)
+            cu, cv_center = int(self.w * 0.35), int(self.h * 0.5)
             points = [(cu, cv_center)]  # Just center point for simplicity
             
             depths = []
