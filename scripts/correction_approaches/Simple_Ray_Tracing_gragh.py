@@ -2,37 +2,13 @@ import rospy
 import numpy as np
 import time
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float64
 from cv_bridge import CvBridge
 import cv2
+import matplotlib.pyplot as plt
 
 bridge = CvBridge()
-disparity_value = 0.0
+disparity_values = np.linspace(70, 0, num=641)
 baseline = 12.0  # cm
-focal_length = 700.0/2  # pixels (approximate average of fx values)
-x,y=250,200
-pub = rospy.Publisher("/computed_3d_point", Float64, queue_size=10)
-
-def depth_callback(msg):
-    global disparity_value
-    global baseline
-    global focal_length
-    global x, y
-    cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
-    h, w = cv_image.shape[:2]
-    # Define a 50x50 zone centered at (x, y)
-    half_zone = 25
-    x1 = max(0, x - half_zone)
-    x2 = min(w, x + half_zone)
-    y1 = max(0, y - half_zone)
-    y2 = min(h, y + half_zone)
-    zone = cv_image[y1:y2, x1:x2]
-    valid_depths = zone[zone > 0]
-    if valid_depths.size > 0:
-        avg_depth = float(np.mean(valid_depths)) * 100  # Depth in cm
-        disparity_value = (focal_length * baseline) / avg_depth
-    else:
-        disparity_value = 0.0
 
 
 def line_plane_intersection(Pline, Pplane, Vline, Vplane):
@@ -40,10 +16,8 @@ def line_plane_intersection(Pline, Pplane, Vline, Vplane):
     P = Pline + h * Vline
     return P
 
-
 def snells_law(n1, n2, theta1):
     return np.arcsin((n1 / n2) * np.sin(theta1))
-
 
 def closest_point_between_rays(A2, B2, v1, v2):
     A = np.dot(v1, v1)
@@ -60,25 +34,26 @@ def closest_point_between_rays(A2, B2, v1, v2):
     P2 = B2 + s2 * v2
     return (P1 + P2) / 2
 
-
-def compute_3d_point():
-    global x,y
+def compute_depth_for_disparity(disparity):
     D = 2.0
     d = 6.0
     n1 = 1.0
-    n2 = 1.5
-    n3 = 1.33
+    n2 = 1.4555
+    n3 = 1.333333
     T = np.array([baseline, 0, 0])
     R = np.eye(3)
     N = np.array([0, 0, 1])
 
-    Pl_uv = np.array([x , y, 1])
-    Pr_uv = np.array([x - disparity_value, y,1])
+    Pl_uv = np.array([320 , 180, 1])
+    Pr_uv = np.array([320-disparity, 180, 1])
 
     Ol = np.array([0, 0, 0])
     Or = T
 
-    fx_left, fy_left = 699.63/2, 699.63/2
+    #fx_left, fy_left = 699.63/2, 699.63/2
+    #cx_left, cy_left = 644.275/2, 332.0365/2
+    
+    fx_left, fy_left = 700.515/2, 700.515/2
     cx_left, cy_left = 662.935/2, 353.9215/2
     K_left = np.array([[fx_left, 0, cx_left],
                        [0, fy_left, cy_left], 
@@ -122,22 +97,29 @@ def compute_3d_point():
 
     zeta_r_3 = ((n2 / n3) * zeta_r_2) - ((n2 / n3) * np.cos(beta_2) - np.cos(beta_4)) * N
     zeta_l_3 = ((n2 / n3) * zeta_l_2) - ((n2 / n3) * np.cos(alpha_2) - np.cos(alpha_4)) * N
+    
 
     P_final = closest_point_between_rays(A2, B2, zeta_l_3, zeta_r_3)
-    print("Depth:", (focal_length * baseline) / disparity_value if disparity_value else 0.0)
-    print("Disparity:", disparity_value)
-    print("3D reconstructed point P:", P_final)
-    pub.publish(Float64(10*P_final[2]))  # Publish the z-coordinate (depth) of the 3D point
-
+    return P_final[2]  # Return positive depth
 
 def main():
-    rospy.init_node('underwater_stereo_depth')
-    rospy.Subscriber("/zed/zed_node/depth/depth_registered", Image, depth_callback)
-    
-    rate = rospy.Rate(15)
-    while not rospy.is_shutdown():
-        compute_3d_point()
-        rate.sleep()
+    depths = []
+    for disp in disparity_values:
+        try:
+            depth = compute_depth_for_disparity(disp)
+        except Exception as e:
+            print(f"Error at disparity {disp}: {e}")
+            depth = np.nan
+        depths.append(depth)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(12*350/disparity_values, depths)
+    plt.xlabel("Raw Depth (cm)")
+    plt.ylabel("Corrected Depth  (cm)")
+    plt.title("Raw Depth vs Corrected Depth")
+    plt.grid(True)
+    #plt.gca().invert_xaxis()  # Optional: to match left-to-right disparity intuition
+    plt.show()
 
 if __name__ == '__main__':
     main()
