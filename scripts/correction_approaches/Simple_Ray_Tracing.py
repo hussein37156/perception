@@ -63,17 +63,17 @@ def closest_point_between_rays(A2, B2, v1, v2):
 
 def compute_3d_point():
     global x,y
-    D = 2.0
+    D = 4.0
     d = 6.0
     n1 = 1.0
     n2 = 1.5
     n3 = 1.33
     T = np.array([baseline, 0, 0])
     R = np.eye(3)
-    N = np.array([0, 0, 1])
+    N = np.array([0, 0, -1])
 
-    Pl_uv = np.array([x , y, 1])
-    Pr_uv = np.array([x - disparity_value, y,1])
+    Pl_uv = np.array([x - disparity_value, y, 1])
+    Pr_uv = np.array([x , y,1])
 
     Ol = np.array([0, 0, 0])
     Or = T
@@ -100,7 +100,7 @@ def compute_3d_point():
     zeta_r_1 = (Pr - Or) / np.linalg.norm(Pr - Or)
     zeta_l_1 = (Pl - Ol) / np.linalg.norm(Pl - Ol)
 
-    C1 = np.array([0, 0, D])  # Plane at depth D
+    C1 = np.array([0, 0, -D])  # Plane at depth D
     A1 = line_plane_intersection(Ol, C1, zeta_l_1, N)
     B1 = line_plane_intersection(Or, C1, zeta_r_1, N)
 
@@ -113,7 +113,7 @@ def compute_3d_point():
     zeta_r_2 = ((n1 / n2) * zeta_r_1) - ((n1 / n2) * np.cos(beta_1) - np.cos(beta_2)) * N
     zeta_l_2 = ((n1 / n2) * zeta_l_1) - ((n1 / n2) * np.cos(alpha_1) - np.cos(alpha_2)) * N
 
-    C2 = np.array([0, 0, (D + d)])  # Plane at depth D + d
+    C2 = np.array([0, 0, -(D + d)])  # Plane at depth D + d
     A2 = line_plane_intersection(A1, C2, zeta_l_2, N)
     B2 = line_plane_intersection(B1, C2, zeta_r_2, N)
 
@@ -127,7 +127,7 @@ def compute_3d_point():
     print("Depth:", (focal_length * baseline) / disparity_value if disparity_value else 0.0)
     print("Disparity:", disparity_value)
     print("3D reconstructed point P:", P_final)
-    pub.publish(Float64(10*P_final[2]))  # Publish the z-coordinate (depth) of the 3D point
+    pub.publish(Float64(10*P_final[2]+40))  # Publish the z-coordinate (depth) of the 3D point
 
 
 def main():
