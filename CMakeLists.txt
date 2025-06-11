@@ -56,6 +56,8 @@ add_message_files(
   FILES
   Landmark.msg
   Multi_instance.msg
+  depth_multiposition.msg
+  comparizon.msg
 )
 
 ## Generate services in the 'srv' folder

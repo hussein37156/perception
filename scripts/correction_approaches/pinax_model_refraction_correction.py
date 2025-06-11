@@ -18,7 +18,7 @@ right_image_pub = rospy.Publisher('/right_rect_image', Image, queue_size=10)
 clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 
 def init():
-    mapPath = "/home/hussein/AUV_ws/src/perception/scripts"
+    mapPath = "/home/hussein/AUV_ws/src/perception/scripts/Working_maps_with_D"
     global mapx_left, mapy_left , mapx_right, mapy_right
     mapx_left = np.loadtxt(f"{mapPath}/MapX_left.txt", dtype=np.float32, delimiter=",")
     mapy_left = np.loadtxt(f"{mapPath}/MapY_left.txt", dtype=np.float32, delimiter=",")

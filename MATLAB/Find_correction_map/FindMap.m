@@ -30,11 +30,11 @@ height = 720/2;
 ImgSize = [height,width];
 
 % camera and lens parameters
-K=[700.515/2 0 662.935/2;
-   0 700.515/2 353.9215/2;
-   0 0 1]; %camera intrinsics
+K=[350.2575 0 662.935/2;
+   0 350.2575 353.9215/2;
+   0 0 1];%camera intrinsics
 % distortion parameters
-radialDist = [0,0];
+radialDist = [-0.174335,0.0267531];
 tangentialDist = [0,0];
 
 % setup parameters

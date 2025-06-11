@@ -1,0 +1,3 @@
+float64 sonar
+float64 corrected_depth
+float64 corrected_depth_error

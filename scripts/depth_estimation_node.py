@@ -5,12 +5,11 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2 as cv
 import numpy as np
+from perception.msg import depth_multiposition
 
 # Camera parameters (verified)
-fx = 473.847
-fy = 456.285
-cx = 368.059
-cy = 177.863
+fx = 350
+fy = 350
 
 
 baseline = 0.12  # 12cm baseline
@@ -25,11 +24,17 @@ MAX_DEPTH = 10.0  # 10m
 
 
 # Stereo matcher configuration
-window_size = 7
+window_size = 2
 min_disp = 0
 num_disp = 18*10  # Increased number of disparities
 
-# Create stereo matcher
+
+# ROS setup
+bridge = CvBridge()
+left_image = None
+right_image = None
+
+
 stereo = cv.StereoSGBM_create(
     minDisparity=min_disp,
     numDisparities=num_disp,
@@ -44,34 +49,22 @@ stereo = cv.StereoSGBM_create(
     mode=cv.STEREO_SGBM_MODE_SGBM_3WAY
 )
 
-# ROS setup
-bridge = CvBridge()
-left_image = None
-right_image = None
-
 def left_image_call_back(data):
     global left_image
     cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")  # Keep original format
+    left_image = cv.cvtColor(cv_image, cv.COLOR_RGBA2BGR)  # Convert to BGR
 
-    if len(cv_image.shape) == 3 and cv_image.shape[2] == 4:  # RGBA (8UC4) detected
-        left_image = cv.cvtColor(cv_image, cv.COLOR_RGBA2BGR)  # Convert to BGR
-    else:
-        left_image = cv_image.copy()  # Already in compatible format   
 
 def right_image_call_back(data):
     global right_image
     cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
+    right_image = cv.cvtColor(cv_image, cv.COLOR_RGBA2BGR)  # Convert to BGR
 
-    if len(cv_image.shape) == 3 and cv_image.shape[2] == 4:  # RGBA (8UC4) detected
-        right_image = cv.cvtColor(cv_image, cv.COLOR_RGBA2BGR)  # Convert to BGR
-    else:
-        right_image = cv_image.copy()
-
-def calculate_depth(disparity_map, u, v, window_size=50):
+def calculate_depth(disparity_map, point, window_size=50):
     """Calculate robust depth at (u,v) with validity checks"""
     half = window_size // 2
-    u, v = int(u), int(v)
-    
+    u, v = int(point[0]), int(point[1])
+
     # Get valid window bounds
     x_min = max(0, u - half)
     x_max = min(disparity_map.shape[1], u + half)
@@ -135,60 +128,39 @@ def main_function():
     if left_image is None or right_image is None:
         return
     
-    # Resize and preprocess
-    left_img =left_image #cv.resize(left_image, (w, h))
-    right_img =right_image #cv.resize(right_image, (w, h))
-    
-    
-    #left_img = cv.remap(left_image, left_map1, left_map2, cv.INTER_LINEAR)
-    #right_img = cv.remap(right_image, right_map1, right_map2, cv.INTER_LINEAR)
-    
-    #gray_left = preprocess_image(left_img)
-    #gray_right = preprocess_image(right_img)
     
     # Compute disparity
-    raw_disp = stereo.compute(left_img, right_img)
+    raw_disp = stereo.compute(left_image, right_image)
     disparity = postprocess_disparity(raw_disp)
     
-    # Calculate depth at multiple points for robustness
-    center_u = int(w *0.5)
-    center_v = int(h*0.5)
-    
     # Sample multiple points around center
-    points = [
-        (center_u, center_v),
-        (center_u + 50, center_v),
-        (center_u - 50, center_v),
-        (center_u, center_v + 50),
-        (center_u, center_v - 50)
-    ]
-    
-    depths = []
-    for u, v in points:
-        depth = calculate_depth(disparity, u, v)
-        if MIN_DEPTH <= depth <= MAX_DEPTH:
-            depths.append(depth)
-    
-    # Use median of valid depth measurements
-    final_depth = np.median(depths) if len(depths) > 0 else 0.0
-    final_depth = (final_depth*1000)
-    # Publish depth
-    depth_msg = std_msgs.msg.Float32()
-    depth_msg.data = final_depth
+    center = calculate_depth(disparity, (w*0.5, h*0.5), 50)*1000
+    right = calculate_depth(disparity, (w*0.75, h*0.5), 50)
+    left = calculate_depth(disparity, (w*0.35, h*0.5), 50)
+
+
+    depth_msg = depth_multiposition()
+    depth_msg.center = center
+    depth_msg.right = right
+    depth_msg.left = left
+
     depth_pub.publish(depth_msg)
-    
+
     # Visualization
     vis_disp = cv.normalize(disparity, None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
     #vis_disp = cv.applyColorMap(vis_disp, cv.COLORMAP_JET)
     
-    # Mark center point
-    cv.circle(vis_disp, (center_u, center_v), 5, (0, 255, 0), 2)
-    cv.putText(vis_disp, f"Depth: {final_depth:.2f}m", (10, 30), 
-               cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    #draw circles on the depth points
+    cv.circle(left_image, (int(w*0.5), int(h*0.5)), 10, (0, 255, 0), -1)
+    cv.circle(left_image, (int(w*0.65), int(h*0.5)), 10, (255, 0, 0), -1)
+    cv.circle(left_image, (int(w*0.35), int(h*0.5)), 10, (0, 0, 255), -1)
+
+
     
     # Show images
-    cv.imshow("Left", left_img)
-    cv.imshow("Right", right_img)
+    #invert color order for display
+    cv.imshow("Left", left_image)
+    cv.imshow("Right", right_image)
     cv.imshow("Disparity", vis_disp)
     cv.waitKey(1)
     
@@ -196,7 +168,6 @@ def main_function():
     valid_disp = disparity[disparity > 0]
     if len(valid_disp) > 0:
         rospy.loginfo(f"Disparity range: {valid_disp.min():.2f}-{valid_disp.max():.2f}")
-    rospy.loginfo(f"Depth: {final_depth:.2f}m")
     
 if __name__ == "__main__":
     rospy.init_node("depth_estimation_node")
@@ -204,7 +175,7 @@ if __name__ == "__main__":
     # Publishers and subscribers
     rospy.Subscriber("/left_rect_image", Image, left_image_call_back)
     rospy.Subscriber("/right_rect_image", Image, right_image_call_back)
-    depth_pub = rospy.Publisher('/depth_estimated', std_msgs.msg.Float32, queue_size=10)
+    depth_pub = rospy.Publisher('/depth_estimated', depth_multiposition, queue_size=10)
     
     rate = rospy.Rate(18)
     
