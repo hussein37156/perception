@@ -9,7 +9,7 @@ from ultralytics import YOLO
 
 class ObjectDetector:
     def __init__(self):
-        rospy.init_node('object_detection', anonymous=False)
+        rospy.init_node('landmark_detection_node', anonymous=False)
 
         # Class variables
         self.landmarks_msg = Multi_instance()
@@ -19,13 +19,20 @@ class ObjectDetector:
         self.fy = 349.815
         self.cx = 337.6375
         self.cy = 173.51825
+        self.mapx_left = None
+        self.mapy_left = None
+        self.mapx_right = None
+        self.mapy_right = None
 
+        mapPath = "/home/hussein/AUV_ws/src/perception/scripts/maps"
+        self.mapx_left = np.loadtxt(f"{mapPath}/MapX_left.txt", dtype=np.float32, delimiter=",")
+        self.mapy_left = np.loadtxt(f"{mapPath}/MapY_left.txt", dtype=np.float32, delimiter=",")
         # Create Ros publishers
         self.landmark_pub = rospy.Publisher('/landmarks', Multi_instance,queue_size=10)
 
         # Create the subscribers
         rospy.Subscriber('/zed/zed_node/left/image_rect_color', Image, self.left_image_callback, queue_size=1)
-        rospy.Subscriber('/zed/zed_node/depth/depth_registered', Image, self.depthmap_callback, queue_size=10)
+        rospy.Subscriber('/depth_image', Image, self.depthmap_callback, queue_size=10)
 
 
         # Initialize the YOLO model
@@ -60,7 +67,7 @@ class ObjectDetector:
         # Replace NaN and infinite values with 0
         region = np.nan_to_num(region, nan=0.0, posinf=0.0, neginf=0.0)
         region = region[region != 0]
-        z = np.mean(region)
+        z = np.mean(region)*1000
         x = (u - self.cx) * z / self.fx
         y = (v - self.cy) * z / self.fy
         
@@ -68,7 +75,7 @@ class ObjectDetector:
 
     def left_image_callback(self, image: Image):
         """ Callback for left image messages. """
-        print("Running YOLO detection...")
+        #print("Running YOLO detection...")
         try:
             img = self.bridge.imgmsg_to_cv2(image, desired_encoding="bgr8")
             #print(img.shape)
@@ -76,7 +83,7 @@ class ObjectDetector:
                 rospy.logwarn("Image not available.")
                 return
 
-            result = self.model.predict(source=img, show=False, conf=0.85)
+            result = self.model.predict(source=img, show=False, conf=0.60)
     
             num_of_instances = result[0].boxes.data.size()[0]
 
@@ -85,6 +92,7 @@ class ObjectDetector:
 
             self.landmarks_msg.data = []
             for i in range(num_of_instances):
+                
                 x_top_left = int(result[0].boxes.data[i][0].item())
                 y_top_left = int(result[0].boxes.data[i][1].item())
                 x_bottom_right = int(result[0].boxes.data[i][2].item())
@@ -92,14 +100,22 @@ class ObjectDetector:
                 u_mid = int((x_top_left + x_bottom_right) / 2)
                 v_mid = int((y_top_left + y_bottom_right) / 2)
                 instance_type = self.getInstanceName(int(result[0].boxes.data[i][5].item()))
-                # confidence_level = result[0].boxes.data[i][4].item()
+                confidence_level = result[0].boxes.data[i][4].item()
                 
                 l=Landmark()
                 l.ID= instance_type
-                l.x,l.y,l.z = self.location(u_mid, v_mid)
-                
+                u_mid_corrected = int(self.mapx_left[v_mid, u_mid])
+                v_mid_corrected = int(self.mapy_left[v_mid, u_mid])
+
+
+                l.x,l.y,l.z = self.location(u_mid_corrected, v_mid_corrected)
+                l.variance = confidence_level
+                l.u_original = u_mid
+                l.v_original = v_mid
+                l.u_corrected = u_mid_corrected
+                l.v_corrected = v_mid_corrected
                 self.landmarks_msg.data.append(l)
-            
+                
             self.landmarks_msg.header.stamp = rospy.Time.now()
             self.landmark_pub.publish(self.landmarks_msg)
             

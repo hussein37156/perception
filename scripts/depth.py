@@ -20,6 +20,8 @@ def region_average(depth_image, point, window_size):
 
     region = depth_image[y1:y2, x1:x2]
     avg_depth = np.nanmean(region)  # Ignore NaNs
+    #saturation
+    avg_depth = np.clip(avg_depth, 0.3, 10.0)  # Limit depth to a reasonable range
     return avg_depth
 
 def depth_map(data):
@@ -27,9 +29,9 @@ def depth_map(data):
         depth_image = bridge.imgmsg_to_cv2(data, desired_encoding="passthrough")
         height, width = depth_image.shape[:2]
         print(f"Depth image size: {width}x{height}")
-        center=region_average(depth_image, (width // 2, height // 2),50)
-        right = region_average(depth_image,(480, 180), 50)
-        left = region_average(depth_image, (160, 180), 50)
+        center=region_average(depth_image, (width // 2, height // 2),50)*1000
+        right = region_average(depth_image,(480, 180), 50)*1000
+        left = region_average(depth_image, (160, 180), 50)*1000
         depth_msg= depth_multiposition()
         depth_msg.center = center
         depth_msg.right = right
@@ -41,7 +43,7 @@ def depth_map(data):
 if __name__ == "__main__":
     rospy.init_node("depth_wrapper", anonymous=False)
     depth_pub = rospy.Publisher('/depth', depth_multiposition, queue_size=10)
-    rospy.Subscriber("/zed/zed_node/depth/depth_registered", Image, depth_map)
+    rospy.Subscriber("/depth_image", Image, depth_map)
     rate = rospy.Rate(15)  # 15 Hz
 
     while not rospy.is_shutdown():

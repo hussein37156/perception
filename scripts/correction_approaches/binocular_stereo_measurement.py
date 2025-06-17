@@ -7,20 +7,23 @@ import cv2 as cv
 import numpy as np
 
 # Camera parameters for HD720
-fx = 700.515
-fy = 700.515
-cx = 662.935
-cy = 353.9215
-k1, k2, p1, p2, k3 = -0.174335, 0.0267531, 0, 0, 0
+baseline = 0.12  # Baseline in meters
 
 h, w = 720, 1280
 
 # Intrinsic and distortion matrices
-K1 = np.array([[fx, 0, cx], 
-               [0, fy, cy], 
-               [0, 0, 1.0]])
+K1 = np.array([[349.815, 0, 322.1375],
+                [0, 349.815, 166.01825],
+                [0, 0, 1]])
+D1 = np.array([-0.174432, 0.0266348, 0.0, 0.0])
 
-K2 = K1.copy()  # Assume both cameras have same intrinsic parameters
+K2 = np.array([[350.2575, 0, 331.4675],
+                [0, 350.2575, 176.96075],
+                [0, 0, 1]])
+D2 = np.array([-0.174432, 0.0266348, 0.0, 0.0])
+
+R = np.eye(3)  # Replace with actual R from stereo calibration if available
+T = np.array([-baseline, 0, 0])
 
 
 
@@ -63,7 +66,7 @@ def correct_underwater_image(image, K, n_air, n_water):
     y_norm = (y - K[1, 2]) / K[1, 1]
 
     # Compute refraction angles using Snell's Law
-    q_air = np.arctan(np.sqrt(x_norm**2 + y_norm**2)/fx)
+    q_air = np.arctan(np.sqrt(x_norm**2 + y_norm**2)/K[0, 0])  # Angle in air
     # Correction term
     correction_factor = np.sqrt((1 - (n * np.sin(q_air))**2) / (1 - np.sin(q_air)**2)) / n
     # Compute new pixel locations
@@ -99,10 +102,10 @@ def main_function():
 
 if __name__ == "__main__":
     rospy.init_node("image_correction", anonymous=False)
-    rospy.Subscriber("/left_image", Image, left_image_call_back)
-    rospy.Subscriber("/right_image", Image, right_image_call_back)
-    left_corrected_pub = rospy.Publisher('/left_corrected', Image, queue_size=10)
-    right_corrected_pub = rospy.Publisher('/right_corrected', Image, queue_size=10)
+    rospy.Subscriber("/zed/zed_node/left/image_rect_color", Image, left_image_call_back)
+    rospy.Subscriber("/zed/zed_node/right/image_rect_color", Image, right_image_call_back)
+    left_corrected_pub = rospy.Publisher('/left_rect_image', Image, queue_size=10)
+    right_corrected_pub = rospy.Publisher('/right_rect_image', Image, queue_size=10)
     left_corrected_msg = Image()
     right_corrected_msg = Image()
     rate = rospy.Rate(15)  # 10 Hz processing loop
