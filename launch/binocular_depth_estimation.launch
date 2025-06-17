@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-
-<launch>
-	<node name="binocular_image_correction" type="binocular_stereo_measurement.py" pkg="perception" output="screen" respawn="true"></node>
-	<node name="depth_map" type="depth_map.py" pkg="perception" output="screen" respawn="true"></node>
-	<node name="depth" type="depth.py" pkg="perception" output="screen" respawn="true"></node>
-	<node name="detection" type="detection.py" pkg="perception" output="screen" respawn="true"></node>
-</launch>
